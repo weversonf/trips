@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mu Trips v08</title>
+    <title>Mu Trips v09</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -16,9 +16,11 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Esconder abas inativas */
         .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
         .view-section.active { display: block; }
+
+        /* Modal Transitions */
+        #modal-add-trip { transition: opacity 0.3s ease; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -26,11 +28,52 @@
         }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden text-gray-800">
 
     <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden transition-opacity" onclick="toggleSidebar()"></div>
+    
+    <div id="modal-add-trip" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden opacity-0">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 m-4 transform scale-95 transition-transform duration-300" id="modal-content">
+            <div class="flex justify-between items-center mb-5 border-b pb-3">
+                <h3 class="text-xl font-bold text-gray-800">Adicionar Nova Viagem</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="form-new-trip" onsubmit="saveTrip(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Destino</label>
+                    <input type="text" id="trip-name" required class="w-full rounded border border-gray-300 py-2 px-3 outline-none focus:border-primary">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Distância (km)</label>
+                        <input type="number" id="trip-km" required class="w-full rounded border border-gray-300 py-2 px-3 outline-none focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dias</label>
+                        <input type="number" id="trip-days" required class="w-full rounded border border-gray-300 py-2 px-3 outline-none focus:border-primary">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Custo Estadia (R$)</label>
+                        <input type="number" id="trip-stay" required class="w-full rounded border border-gray-300 py-2 px-3 outline-none focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Custo Alimentação (R$)</label>
+                        <input type="number" id="trip-food" required class="w-full rounded border border-gray-300 py-2 px-3 outline-none focus:border-primary">
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded hover:bg-opacity-90">Salvar Roteiro</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-40 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="h-16 flex items-center justify-between px-6 border-b border-gray-200">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold">M</div>
@@ -42,15 +85,13 @@
         </div>
         
         <div class="flex-1 overflow-y-auto py-4 px-4 no-scrollbar">
-            <p class="text-xs font-semibold text-gray-400 mb-4 px-2">MENU PRINCIPAL</p>
+            <p class="text-xs font-semibold text-gray-400 mb-4 px-2">MENU</p>
             <nav class="space-y-1">
                 <a href="#" onclick="switchTab('dashboard', this)" class="nav-item active flex items-center gap-3 px-3 py-2 bg-primary-light text-primary rounded-md font-medium">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Dashboard
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg> Dashboard
                 </a>
                 <a href="#" onclick="switchTab('planejamento', this)" class="nav-item flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-md font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Planejamento
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Planejamento
                 </a>
             </nav>
         </div>
@@ -60,15 +101,15 @@
         
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
             <div class="flex items-center">
-                <button onclick="toggleSidebar()" class="p-2 mr-2 lg:hidden text-gray-500 rounded-md hover:bg-gray-100 focus:outline-none">
+                <button onclick="toggleSidebar()" class="p-2 mr-2 lg:hidden text-gray-500 rounded-md hover:bg-gray-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <div class="hidden md:flex items-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input type="text" placeholder="Pesquisar viagem..." class="ml-2 w-full outline-none text-sm text-gray-600 bg-transparent">
-                </div>
             </div>
             <div class="flex items-center gap-4">
+                <button onclick="openModal()" class="hidden md:flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-opacity-90 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Nova Viagem
+                </button>
                 <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600">WF</div>
             </div>
         </header>
@@ -76,41 +117,54 @@
         <div class="flex-1 overflow-y-auto p-4 lg:p-8">
             
             <div id="view-dashboard" class="view-section active w-full max-w-7xl mx-auto">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Visão Geral</h2>
+                
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold text-gray-800" id="dash-title">Visão Geral</h2>
+                    
+                    <div class="flex w-full md:w-auto gap-2">
+                        <select id="tripFilter" onchange="applyFilter()" class="w-full md:w-64 bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md outline-none focus:border-primary text-sm shadow-sm cursor-pointer">
+                            <option value="all">📊 Todas as Viagens</option>
+                            </select>
+                        <button onclick="openModal()" class="md:hidden flex items-center justify-center bg-primary text-white p-2 rounded-md w-10 h-10 shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                         <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4 text-xl">🏍️</div>
-                        <h3 class="text-2xl font-bold text-gray-800">1.020</h3>
+                        <h3 class="text-2xl font-bold text-gray-800" id="kpi-km">0</h3>
                         <p class="text-sm text-gray-500 mt-1">KMs Planejados</p>
                     </div>
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                         <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4 text-xl">⛽</div>
-                        <h3 class="text-2xl font-bold text-gray-800">R$ 250</h3>
-                        <p class="text-sm text-gray-500 mt-1">Gasto Previsto</p>
+                        <h3 class="text-2xl font-bold text-gray-800" id="kpi-fuel">R$ 0</h3>
+                        <p class="text-sm text-gray-500 mt-1">Combustível Estimado</p>
                     </div>
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                         <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4 text-xl">💧</div>
-                        <h3 class="text-2xl font-bold text-gray-800">10.5L</h3>
-                        <p class="text-sm text-gray-500 mt-1">Hidratação Total</p>
+                        <h3 class="text-2xl font-bold text-gray-800" id="kpi-water">0 L</h3>
+                        <p class="text-sm text-gray-500 mt-1">Meta de Hidratação</p>
                     </div>
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                         <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4 text-xl">💰</div>
-                        <h3 class="text-2xl font-bold text-gray-800">R$ 865</h3>
-                        <p class="text-sm text-gray-500 mt-1">Orçamento Base</p>
+                        <h3 class="text-2xl font-bold text-gray-800 text-primary" id="kpi-total">R$ 0</h3>
+                        <p class="text-sm text-gray-500 mt-1">Custo Total</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm lg:col-span-2">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Projeção de Custos 2026</h3>
-                        <div class="h-64 relative"><canvas id="barChart"></canvas></div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-4" id="chart-title">Evolução de Custos</h3>
+                        <div class="h-64 relative"><canvas id="mainChart"></canvas></div>
                     </div>
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm flex flex-col items-center">
-                        <h3 class="text-lg font-bold text-gray-800 self-start">Orçamento</h3>
+                        <h3 class="text-lg font-bold text-gray-800 self-start">Peso do Combustível</h3>
                         <div class="w-48 h-48 relative mt-4">
                             <canvas id="gaugeChart"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pt-8">
-                                <span class="text-3xl font-bold text-gray-800">75%</span>
+                                <span class="text-2xl font-bold text-gray-800" id="gauge-percent">0%</span>
                             </div>
                         </div>
                     </div>
@@ -119,51 +173,27 @@
 
             <div id="view-planejamento" class="view-section w-full max-w-5xl mx-auto">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Simulador de Autonomia</h2>
-                
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                    
                     <div class="lg:col-span-3 bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-5 border-b pb-3">Parâmetros da Rota</h3>
-                        
+                        <h3 class="text-lg font-semibold text-gray-800 mb-5 border-b pb-3">Fazer 250 (29km/L)</h3>
                         <div class="space-y-5">
-                            <div>
-                                <label class="mb-2 block text-sm font-medium text-gray-700">Distância Total (Ida e Volta em km)</label>
-                                <input type="number" id="calc-km" value="1020" oninput="runCalculator()" class="w-full rounded border border-gray-300 bg-transparent py-3 px-4 text-gray-800 outline-none transition focus:border-primary focus:ring-1 focus:ring-primary">
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label class="mb-2 block text-sm font-medium text-gray-700">Duração (Dias)</label>
-                                    <input type="number" id="calc-days" value="3" oninput="runCalculator()" class="w-full rounded border border-gray-300 bg-transparent py-3 px-4 text-gray-800 outline-none transition focus:border-primary focus:ring-1 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="mb-2 block text-sm font-medium text-gray-700">Preço Gasolina (R$)</label>
-                                    <input type="number" id="calc-price" value="6.80" step="0.01" oninput="runCalculator()" class="w-full rounded border border-gray-300 bg-transparent py-3 px-4 text-gray-800 outline-none transition focus:border-primary focus:ring-1 focus:ring-primary">
-                                </div>
+                            <div><label class="mb-2 block text-sm font-medium text-gray-700">Distância (km)</label><input type="number" id="calc-km" value="1020" oninput="runCalculator()" class="w-full rounded border border-gray-300 py-3 px-4 outline-none focus:border-primary"></div>
+                            <div class="grid grid-cols-2 gap-5">
+                                <div><label class="mb-2 block text-sm font-medium text-gray-700">Dias</label><input type="number" id="calc-days" value="3" oninput="runCalculator()" class="w-full rounded border border-gray-300 py-3 px-4 outline-none focus:border-primary"></div>
+                                <div><label class="mb-2 block text-sm font-medium text-gray-700">Preço Gasolina (R$)</label><input type="number" id="calc-price" value="6.80" step="0.01" oninput="runCalculator()" class="w-full rounded border border-gray-300 py-3 px-4 outline-none focus:border-primary"></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="lg:col-span-2 space-y-6">
                         <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm border-l-4 border-l-primary">
-                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Custo Combustível</p>
-                            <h2 class="text-3xl font-bold text-gray-800" id="res-fuel-cost">R$ 239,17</h2>
-                            <p class="text-xs text-gray-400 mt-2">Volume: <span id="res-fuel-liters" class="font-semibold text-gray-600">35.1</span> Litros</p>
+                            <p class="text-sm font-medium text-gray-500 uppercase">Custo Combustível</p>
+                            <h2 class="text-3xl font-bold text-gray-800 mt-1" id="res-fuel-cost">R$ 0,00</h2>
                         </div>
-                        
                         <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm border-l-4 border-l-blue-400">
-                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Meta de Hidratação</p>
-                            <h2 class="text-3xl font-bold text-gray-800" id="res-water">10.5 Litros</h2>
-                            <p class="text-xs text-gray-400 mt-2">Copo/Garrafa 473ml: <span id="res-water-cups" class="font-semibold text-gray-600">22</span> unidades</p>
-                        </div>
-
-                        <div class="bg-gray-50 p-4 rounded-md border border-gray-100">
-                            <p class="text-xs text-gray-500 leading-relaxed text-center">
-                                * Cálculos automáticos travados na média de <strong>29 km/L</strong> do veículo e na meta diária de <strong>3.5L</strong> de água.
-                            </p>
+                            <p class="text-sm font-medium text-gray-500 uppercase">Meta de Hidratação</p>
+                            <h2 class="text-3xl font-bold text-gray-800 mt-1" id="res-water">0 L</h2>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -171,87 +201,174 @@
     </main>
 
     <script>
-        // --- NAVEGAÇÃO SPA E MOBILE ---
-        function switchTab(viewId, element) {
-            // Esconde todas as views
-            document.querySelectorAll('.view-section').forEach(view => {
-                view.classList.remove('active');
-            });
-            // Remove active dos links
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.classList.remove('bg-primary-light', 'text-primary');
-                nav.classList.add('text-gray-500');
-            });
-            
-            // Mostra a view correta
-            document.getElementById('view-' + viewId).classList.add('active');
-            // Estiliza o link ativo
-            element.classList.remove('text-gray-500');
-            element.classList.add('bg-primary-light', 'text-primary');
+        // --- BASE DE DADOS (ESTADO) ---
+        let tripsData = [
+            { id: 't1', name: 'Expocrato 2026', km: 1020, days: 3, food: 200, stay: 415, fuel: 239.17, month: 6 }, // Julho (index 6)
+            { id: 't2', name: 'Bate-Volta Fortim', km: 300, days: 1, food: 80, stay: 0, fuel: 70.34, month: 2 } // Março (index 2)
+        ];
 
-            // Fechar sidebar no mobile ao clicar
+        let mainChartObj = null;
+        let gaugeChartObj = null;
+
+        // Constantes da Moto
+        const CONSUMO_FAZER = 29;
+        const PRECO_GASOLINA = 6.80;
+        const META_AGUA_DIARIA = 3.5;
+
+        // --- FUNÇÕES UI GERAIS ---
+        function switchTab(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('bg-primary-light', 'text-primary'); n.classList.add('text-gray-500'); });
+            document.getElementById('view-' + viewId).classList.add('active');
+            element.classList.remove('text-gray-500'); element.classList.add('bg-primary-light', 'text-primary');
             if(window.innerWidth < 1024) toggleSidebar();
         }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // --- MODAL NOVA VIAGEM ---
+        function openModal() {
+            const modal = document.getElementById('modal-add-trip');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            // Pequeno delay para animação CSS
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-add-trip');
+            const content = document.getElementById('modal-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function saveTrip(e) {
+            e.preventDefault();
+            const name = document.getElementById('trip-name').value;
+            const km = parseFloat(document.getElementById('trip-km').value);
+            const days = parseFloat(document.getElementById('trip-days').value);
+            const stay = parseFloat(document.getElementById('trip-stay').value);
+            const food = parseFloat(document.getElementById('trip-food').value);
             
-            if (sidebar.classList.contains('-translate-x-full')) {
-                // Abrir
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
+            const fuel = (km / CONSUMO_FAZER) * PRECO_GASOLINA;
+
+            const newTrip = {
+                id: 't' + Date.now(),
+                name: name, km: km, days: days, stay: stay, food: food, fuel: fuel,
+                month: new Date().getMonth() // Mês atual como padrão
+            };
+
+            tripsData.push(newTrip);
+            populateDropdown();
+            document.getElementById('tripFilter').value = newTrip.id;
+            applyFilter(); // Atualiza dashboard com a nova viagem
+            closeModal();
+            document.getElementById('form-new-trip').reset();
+        }
+
+        // --- LÓGICA DO DASHBOARD (FILTRO E GRÁFICOS) ---
+        function populateDropdown() {
+            const select = document.getElementById('tripFilter');
+            select.innerHTML = '<option value="all">📊 Visão Geral (Todas)</option>';
+            tripsData.forEach(trip => {
+                select.innerHTML += `<option value="${trip.id}">🏍️ ${trip.name}</option>`;
+            });
+        }
+
+        function applyFilter() {
+            const filterId = document.getElementById('tripFilter').value;
+            
+            let filteredTrips = filterId === 'all' ? tripsData : tripsData.filter(t => t.id === filterId);
+            
+            // Somatórios
+            let sumKm = 0, sumFuel = 0, sumDays = 0, sumFood = 0, sumStay = 0;
+            filteredTrips.forEach(t => {
+                sumKm += t.km; sumFuel += t.fuel; sumDays += t.days; sumFood += t.food; sumStay += t.stay;
+            });
+            
+            const sumTotal = sumFuel + sumFood + sumStay;
+            const sumWater = sumDays * META_AGUA_DIARIA;
+
+            // Atualiza KPIs
+            document.getElementById('dash-title').innerText = filterId === 'all' ? 'Visão Geral' : filteredTrips[0].name;
+            document.getElementById('kpi-km').innerText = sumKm.toLocaleString();
+            document.getElementById('kpi-fuel').innerText = `R$ ${sumFuel.toFixed(0)}`;
+            document.getElementById('kpi-water').innerText = `${sumWater} L`;
+            document.getElementById('kpi-total').innerText = `R$ ${sumTotal.toFixed(0)}`;
+
+            updateCharts(filterId, filteredTrips, sumFuel, sumTotal);
+        }
+
+        function updateCharts(filterId, filteredTrips, sumFuel, sumTotal) {
+            // Gauge Chart Update
+            const percentFuel = sumTotal > 0 ? Math.round((sumFuel / sumTotal) * 100) : 0;
+            document.getElementById('gauge-percent').innerText = `${percentFuel}%`;
+            
+            if (gaugeChartObj) gaugeChartObj.destroy();
+            const ctxGauge = document.getElementById('gaugeChart').getContext('2d');
+            gaugeChartObj = new Chart(ctxGauge, {
+                type: 'doughnut',
+                data: { datasets: [{ data: [percentFuel, 100 - percentFuel], backgroundColor: ['#3C50E0', '#E2E8F0'], borderWidth: 0, cutout: '80%' }] },
+                options: { responsive: true, maintainAspectRatio: false, circumference: 180, rotation: -90, plugins: { tooltip: { enabled: false } } }
+            });
+
+            // Main Bar Chart Update
+            if (mainChartObj) mainChartObj.destroy();
+            const ctxBar = document.getElementById('mainChart').getContext('2d');
+            
+            if (filterId === 'all') {
+                // Mostrar todos os meses
+                document.getElementById('chart-title').innerText = 'Investimento por Mês (2026)';
+                let monthlyData = new Array(12).fill(0);
+                filteredTrips.forEach(t => { monthlyData[t.month] += (t.fuel + t.food + t.stay); });
+
+                mainChartObj = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                        datasets: [{ label: 'Custo Total', data: monthlyData, backgroundColor: '#3C50E0', borderRadius: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
             } else {
-                // Fechar
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
+                // Mostrar Categorias da Viagem Específica
+                document.getElementById('chart-title').innerText = 'Distribuição de Custos';
+                const t = filteredTrips[0];
+                mainChartObj = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Combustível', 'Hospedagem', 'Alimentação'],
+                        datasets: [{ label: 'Valor (R$)', data: [t.fuel, t.stay, t.food], backgroundColor: ['#f28705', '#c729f2', '#0ae6f2'], borderRadius: 4, barThickness: 40 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
             }
         }
 
-        // --- CALCULADORA (PLANEJAMENTO) ---
+        // --- CALCULADORA DE PLANEJAMENTO ---
         function runCalculator() {
             const km = parseFloat(document.getElementById('calc-km').value) || 0;
             const days = parseFloat(document.getElementById('calc-days').value) || 0;
             const price = parseFloat(document.getElementById('calc-price').value) || 0;
-            
-            const consumoFixo = 29;
-            const metaAguaFixa = 3.5;
-            const mlCopo = 0.473;
-
-            // Cálculos
-            const litrosNecessarios = km / consumoFixo;
-            const custoGasolina = litrosNecessarios * price;
-            const aguaTotal = days * metaAguaFixa;
-            const coposAgua = aguaTotal / mlCopo;
-
-            // Atualiza UI
-            document.getElementById('res-fuel-cost').innerText = `R$ ${custoGasolina.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('res-fuel-liters').innerText = litrosNecessarios.toFixed(1);
-            document.getElementById('res-water').innerText = `${aguaTotal.toFixed(1)} Litros`;
-            document.getElementById('res-water-cups').innerText = Math.ceil(coposAgua);
+            const fuelCost = (km / CONSUMO_FAZER) * price;
+            document.getElementById('res-fuel-cost').innerText = `R$ ${fuelCost.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('res-water').innerText = `${(days * META_AGUA_DIARIA).toFixed(1)} L`;
         }
 
-        // Executar cálculo inicial ao carregar a página
+        // --- INIT ---
         document.addEventListener("DOMContentLoaded", () => {
+            populateDropdown();
+            applyFilter();
             runCalculator();
-
-            // Gráficos (Apenas renderizados no Dashboard inicial)
-            const ctxBar = document.getElementById('barChart').getContext('2d');
-            new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                    datasets: [{ label: 'Custos', data: [0, 0, 180, 0, 0, 0, 865, 0, 0, 0, 0, 0], backgroundColor: '#3C50E0', borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            const ctxGauge = document.getElementById('gaugeChart').getContext('2d');
-            new Chart(ctxGauge, {
-                type: 'doughnut',
-                data: { datasets: [{ data: [75, 25], backgroundColor: ['#3C50E0', '#E2E8F0'], borderWidth: 0, cutout: '80%' }] },
-                options: { responsive: true, maintainAspectRatio: false, circumference: 180, rotation: -90, plugins: { tooltip: { enabled: false } } }
-            });
         });
     </script>
 </body>
