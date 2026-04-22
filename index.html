@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip v02</title>
+    <title>Mu Trips v03</title>
     <style>
         :root {
             --bg: #0f0f12;
@@ -13,6 +13,7 @@
             --accent-orange: #f28705;
             --text-p: #9a9a9f;
             --text-h: #ffffff;
+            --glass-border: rgba(255,255,255,0.1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -28,161 +29,236 @@
 
         .app-container {
             width: 100%;
-            max-width: 400px; /* Estilo Celular/SaaS App */
+            max-width: 450px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+        }
+
+        /* Filtro de Viagens */
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            scrollbar-width: none;
+        }
+        .filter-section::-webkit-scrollbar { display: none; }
+
+        .chip {
+            background: var(--card);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid var(--glass-border);
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.3s;
+            color: var(--text-p);
+        }
+
+        .chip.active {
+            background: var(--accent-orange);
+            color: white;
+            border-color: var(--accent-orange);
+            box-shadow: 0 4px 15px rgba(242, 135, 5, 0.3);
         }
 
         .glass-card {
             background: var(--card);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid var(--glass-border);
             border-radius: 24px;
             padding: 24px;
-            position: relative;
-            overflow: hidden;
+            transition: all 0.5s ease;
         }
 
-        .header { display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 18px; font-weight: 600; }
-        .header p { font-size: 12px; color: var(--text-p); }
-
-        /* Gráfico de Rosca (SVG) */
+        /* Gráfico Dinâmico */
         .chart-container {
             display: flex;
             justify-content: center;
-            margin: 20px 0;
+            margin: 10px 0;
             position: relative;
         }
-
         .chart-info {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
         }
-
         .chart-info span { display: block; color: var(--text-p); font-size: 10px; text-transform: uppercase; }
-        .chart-info b { font-size: 22px; }
+        .chart-info b { font-size: 24px; transition: 0.3s; }
 
-        /* Grid de Valores */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .stat-item { padding: 15px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
+        .circle-bg { fill: none; stroke: #222; stroke-width: 10; }
+        .circle-progress { 
+            fill: none; stroke: var(--accent-orange); stroke-width: 10; 
+            stroke-dasharray: 440; stroke-dashoffset: 440;
+            transition: stroke-dashoffset 0.8s ease-in-out;
+            stroke-linecap: round;
+        }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .stat-item { padding: 15px; border-radius: 16px; background: rgba(255,255,255,0.03); }
         .stat-item h4 { font-size: 10px; color: var(--text-p); text-transform: uppercase; margin-bottom: 5px; }
-        .stat-item p { font-size: 16px; font-weight: 600; }
+        .stat-item p { font-size: 18px; font-weight: 700; }
 
         /* Lista de Itens */
         .item-list { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
-        .item { display: flex; justify-content: space-between; align-items: center; }
+        .item { display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.5s ease; }
         .item-left { display: flex; gap: 12px; align-items: center; }
-        .icon-box { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .icon-box { width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; }
         .item-info b { font-size: 14px; display: block; }
         .item-info span { font-size: 11px; color: var(--text-p); }
-        .item-price { font-weight: 600; font-size: 14px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .btn-main {
-            background: linear-gradient(135deg, var(--accent-orange), #d35400);
-            color: white;
-            border: none;
-            padding: 18px;
-            border-radius: 16px;
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(242, 135, 5, 0.2);
-        }
-
-        /* Manchas de luz ao fundo (efeito da imagem) */
-        .glow {
-            position: absolute;
-            width: 100px; height: 100px;
-            filter: blur(50px);
-            opacity: 0.3;
-            z-index: -1;
-        }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     
-    <div class="glass-card header">
-        <div>
-            <h1>Expocrato 2026</h1>
-            <p>Fazer 250 • 11/07 a 13/07</p>
-        </div>
-        <div style="text-align: right">
-            <span style="font-size: 20px;">🛡️</span>
-        </div>
+    <div class="header">
+        <h2 id="trip-title" style="margin-bottom: 5px;">Viagens Ativas</h2>
+        <p id="trip-date" style="color: var(--text-p); font-size: 13px;">Selecione um destino</p>
     </div>
 
+    <div class="filter-section" id="filter-bar">
+        </div>
+
     <div class="glass-card">
-        <div class="glow" style="background: var(--accent-purple); top: -20px; right: -20px;"></div>
         <div class="chart-container">
             <svg width="160" height="160">
-                <circle cx="80" cy="80" r="70" fill="none" stroke="#222" stroke-width="12" />
-                <circle cx="80" cy="80" r="70" fill="none" stroke="var(--accent-orange)" stroke-width="12" stroke-dasharray="440" stroke-dashoffset="300" stroke-linecap="round" />
+                <circle class="circle-bg" cx="80" cy="80" r="70" />
+                <circle class="circle-progress" id="main-progress" cx="80" cy="80" r="70" />
             </svg>
             <div class="chart-info">
-                <span>Total Gasto</span>
-                <b>R$ 865</b>
+                <span>Investimento</span>
+                <b id="total-value">R$ 0</b>
             </div>
         </div>
         
         <div class="stats-grid">
             <div class="stat-item">
                 <h4>Gasolina</h4>
-                <p style="color: var(--accent-orange)">R$ 250</p>
+                <p id="fuel-stat" style="color: var(--accent-orange)">R$ 0</p>
             </div>
             <div class="stat-item">
                 <h4>Hospedagem</h4>
-                <p style="color: var(--accent-purple)">R$ 415</p>
+                <p id="lodging-stat" style="color: var(--accent-purple)">R$ 0</p>
             </div>
         </div>
     </div>
 
     <div class="glass-card">
-        <h4 style="font-size: 12px; color: var(--text-p); margin-bottom: 20px; text-transform: uppercase;">Detalhamento</h4>
-        <div class="item-list">
-            <div class="item">
-                <div class="item-left">
-                    <div class="icon-box">⛽</div>
-                    <div class="item-info">
-                        <b>Combustível</b>
-                        <span>1.020 km (29km/L)</span>
-                    </div>
-                </div>
-                <div class="item-price">R$ 250</div>
+        <h4 style="font-size: 11px; color: var(--text-p); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Detalhamento Noir</h4>
+        <div class="item-list" id="details-list">
             </div>
-            <div class="item">
-                <div class="item-left">
-                    <div class="icon-box">🍲</div>
-                    <div class="item-info">
-                        <b>Alimentação</b>
-                        <span>Almoço e Janta</span>
-                    </div>
-                </div>
-                <div class="item-price">R$ 175</div>
-            </div>
-            <div class="item">
-                <div class="item-left">
-                    <div class="icon-box">💧</div>
-                    <div class="item-info">
-                        <b>Hidratação</b>
-                        <span>Meta 3,5L/dia</span>
-                    </div>
-                </div>
-                <div class="item-price">R$ 25</div>
-            </div>
-        </div>
     </div>
-
-    <button class="btn-main" onclick="alert('Partiu Cariri! Cuida na fuga.')">Confirmar Roteiro</button>
 
 </div>
 
+<script>
+    // Seus dados de viagens
+    const trips = [
+        {
+            id: 'expocrato',
+            name: 'Expocrato 2026',
+            date: '11/07 a 13/07 • Fazer 250',
+            total: 865,
+            fuel: 250,
+            lodging: 415,
+            percent: 70, // Representação no gráfico
+            items: [
+                { icon: '⛽', label: 'Combustível', desc: '1.020 km (29km/L)', price: 250 },
+                { icon: '🏨', label: 'Hospedagem', desc: 'Crato (Sáb-Seg)', price: 415 },
+                { icon: '🍲', label: 'Alimentação', desc: 'Refeições + H2O', price: 200 }
+            ]
+        },
+        {
+            id: 'fortim',
+            name: 'Bate-Volta Fortim',
+            date: 'Março 2026 • Fazer 250',
+            total: 180,
+            fuel: 60,
+            lodging: 0,
+            percent: 30,
+            items: [
+                { icon: '⛽', label: 'Combustível', desc: 'BR-116/Litoral', price: 60 },
+                { icon: '🍛', label: 'Almoço Peixada', desc: 'Beira Mar', price: 80 },
+                { icon: '💧', label: 'Hidratação', desc: 'Meta 3.5L', price: 40 }
+            ]
+        },
+        {
+            id: 'chile',
+            name: 'Punta Arenas (Chile)',
+            date: 'Dezembro 2027 • Planejamento',
+            total: 12500,
+            fuel: 0,
+            lodging: 4500,
+            percent: 90,
+            items: [
+                { icon: '✈️', label: 'Aéreo Fortaleza/Chile', desc: 'Ida e Volta', price: 3500 },
+                { icon: '❄️', label: 'Hospedagem Neve', desc: '10 Dias', price: 4500 },
+                { icon: '🧥', label: 'Equipamento Frio', desc: 'Jaquetas e Botas', price: 2000 },
+                { icon: '🍷', label: 'Gastronomia', desc: 'Vinhos e Jantares', price: 2500 }
+            ]
+        }
+    ];
+
+    function loadTrip(tripId) {
+        const trip = trips.find(t => t.id === tripId);
+        
+        // Atualiza textos
+        document.getElementById('trip-title').innerText = trip.name;
+        document.getElementById('trip-date').innerText = trip.date;
+        document.getElementById('total-value').innerText = `R$ ${trip.total.toLocaleString('pt-br')}`;
+        document.getElementById('fuel-stat').innerText = `R$ ${trip.fuel}`;
+        document.getElementById('lodging-stat').innerText = `R$ ${trip.lodging}`;
+
+        // Atualiza Gráfico (stroke-dashoffset: 440 é vazio, 0 é cheio)
+        const offset = 440 - (440 * trip.percent / 100);
+        document.getElementById('main-progress').style.strokeDashoffset = offset;
+
+        // Atualiza Lista
+        const listContainer = document.getElementById('details-list');
+        listContainer.innerHTML = '';
+        trip.items.forEach(item => {
+            listContainer.innerHTML += `
+                <div class="item">
+                    <div class="item-left">
+                        <div class="icon-box">${item.icon}</div>
+                        <div class="item-info">
+                            <b>${item.label}</b>
+                            <span>${item.desc}</span>
+                        </div>
+                    </div>
+                    <div class="item-price">R$ ${item.price}</div>
+                </div>
+            `;
+        });
+
+        // Atualiza chips
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.id === tripId);
+        });
+    }
+
+    // Inicializa Filtros
+    const filterBar = document.getElementById('filter-bar');
+    trips.forEach((trip, index) => {
+        const chip = document.createElement('div');
+        chip.className = `chip ${index === 0 ? 'active' : ''}`;
+        chip.innerText = trip.name;
+        chip.dataset.id = trip.id;
+        chip.onclick = () => loadTrip(trip.id);
+        filterBar.appendChild(chip);
+    });
+
+    // Carrega a primeira viagem por padrão
+    loadTrip(trips[0].id);
+
+</script>
 </body>
 </html>
