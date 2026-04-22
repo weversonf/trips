@@ -1,202 +1,288 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mu Trips SaaS v06</title>
+    <title>Mu Trips v07</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg-deep: #0b0a0f;
-            --sidebar: #0f0f14;
-            --card-glass: rgba(22, 22, 28, 0.7);
-            --accent-purple: #c729f2;
-            --accent-blue: #0ae6f2;
-            --accent-orange: #f28705;
-            --text-main: #ffffff;
-            --text-dim: #94a3b8;
-            --border-glass: rgba(255, 255, 255, 0.08);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-deep); color: var(--text-main); min-height: 100vh; overflow: hidden; }
-
-        .app-shell { display: flex; height: 100vh; }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: 80px;
-            background: var(--sidebar);
-            border-right: 1px solid var(--border-glass);
-            display: flex; flex-direction: column; align-items: center; padding: 30px 0; gap: 40px;
-            transition: width 0.3s;
-        }
-        .sidebar:hover { width: 220px; }
-        .sidebar:hover .nav-label { display: block; }
-
-        .logo { font-weight: 900; color: var(--accent-orange); font-size: 24px; margin-bottom: 20px; }
-        .nav-item { 
-            width: 100%; display: flex; align-items: center; padding: 15px 25px; 
-            cursor: pointer; color: var(--text-dim); transition: 0.3s; gap: 15px;
-        }
-        .nav-item:hover, .nav-item.active { color: var(--text-main); background: rgba(255,255,255,0.05); }
-        .nav-item.active { border-right: 3px solid var(--accent-orange); }
-        .nav-label { display: none; font-size: 14px; white-space: nowrap; }
-
-        /* --- MAIN CONTENT --- */
-        .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; }
-        .view-content { display: none; width: 100%; max-width: 1100px; margin: 0 auto; }
-        .view-content.active { display: block; animation: slideUp 0.4s ease-out; }
-
-        .glass-card {
-            background: var(--card-glass);
-            backdrop-filter: blur(25px); border: 1px solid var(--border-glass);
-            border-radius: 24px; padding: 30px; margin-bottom: 25px; position: relative;
-        }
-
-        /* --- DASHBOARD VIEW --- */
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .kpi-card span { font-size: 11px; text-transform: uppercase; color: var(--text-dim); }
-        .kpi-card h2 { font-size: 28px; margin-top: 10px; }
-
-        /* --- PLANNER VIEW --- */
-        .planner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
-        input { 
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);
-            padding: 12px; border-radius: 12px; color: white; outline: none;
-        }
-        .calc-result { background: rgba(242, 135, 5, 0.1); border: 1px solid var(--accent-orange); }
-
-        /* --- CHECKLIST VIEW --- */
-        .check-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-        .check-item input { width: auto; }
-        .check-item.done { opacity: 0.4; text-decoration: line-through; }
-
-        /* --- KANBAN VIEW --- */
-        .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .kanban-col { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 15px; min-height: 400px; }
-        .kanban-title { font-size: 12px; color: var(--text-dim); margin-bottom: 15px; text-transform: uppercase; }
-        .kanban-task { background: var(--card-glass); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--accent-blue); font-size: 14px; }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #F1F5F9; }
+        .text-primary { color: #3C50E0; }
+        .bg-primary { background-color: #3C50E0; }
+        .bg-primary-light { background-color: #EFF4FB; }
+        
+        /* Ocultar barra de rolagem mas permitir scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
+<body class="flex h-screen overflow-hidden">
 
-<div class="app-shell">
-    <aside class="sidebar">
-        <div class="logo">M</div>
-        <div class="nav-item active" onclick="showView('dashboard', this)"><span>📊</span><span class="nav-label">Dashboard</span></div>
-        <div class="nav-item" onclick="showView('planner', this)"><span>⚙️</span><span class="nav-label">Planejador</span></div>
-        <div class="nav-item" onclick="showView('checklist', this)"><span>✅</span><span class="nav-label">Checklist</span></div>
-        <div class="nav-item" onclick="showView('kanban', this)"><span>📋</span><span class="nav-label">Logística</span></div>
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-gray-200">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold">M</div>
+                <span class="text-xl font-bold text-gray-800">Mu Trips</span>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto py-4 px-4 no-scrollbar">
+            <p class="text-xs font-semibold text-gray-400 mb-4 px-2">MENU PRINCIPAL</p>
+            <nav class="space-y-1">
+                <a href="#" class="flex items-center gap-3 px-3 py-2 bg-primary-light text-primary rounded-md font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-md font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Planeamento
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-md font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Checklists
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-md font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Histórico Logístico
+                </a>
+            </nav>
+        </div>
     </aside>
 
-    <main class="main-container">
+    <main class="flex-1 flex flex-col h-screen">
         
-        <section id="view-dashboard" class="view-content active">
-            <h1 style="margin-bottom: 30px;">Status da Viagem: Expocrato 2026</h1>
-            <div class="kpi-row">
-                <div class="glass-card kpi-card"><span>Total Estimado</span><h2 style="color: var(--accent-orange)">R$ 865,00</h2></div>
-                <div class="glass-card kpi-card"><span>Gasolina</span><h2>R$ 250,00</h2></div>
-                <div class="glass-card kpi-card"><span>Meta H2O</span><h2 style="color: var(--accent-blue)">3.5L / Dia</h2></div>
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+            <div class="flex items-center w-1/2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" placeholder="Pesquisar viagem ou destino..." class="ml-2 w-full outline-none text-sm text-gray-600">
             </div>
-            <div class="glass-card">
-                <h3>Relatório de Custos</h3>
-                <div id="trip-details" style="margin-top: 20px;">
-                    <p style="color: var(--text-dim)">• Combustível (Ida/Volta): R$ 250,00</p>
-                    <p style="color: var(--text-dim); margin-top: 10px;">• Hospedagem: R$ 415,00</p>
-                    <p style="color: var(--text-dim); margin-top: 10px;">• Alimentação: R$ 200,00</p>
-                </div>
+            <div class="flex items-center gap-4">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600">WF</div>
             </div>
-        </section>
+        </header>
 
-        <section id="view-planner" class="view-content">
-            <h1 style="margin-bottom: 30px;">Simulador de Autonomia</h1>
-            <div class="planner-grid">
-                <div class="glass-card">
-                    <div class="input-group"><label>Distância Total (Ida/Volta km)</label><input type="number" id="plan-km" value="1020" oninput="calculateTrip()"></div>
-                    <div class="input-group"><label>Dias de Viagem</label><input type="number" id="plan-days" value="3" oninput="calculateTrip()"></div>
-                    <div class="input-group"><label>Preço Gasolina (L)</label><input type="number" id="plan-price" value="6.80" step="0.01" oninput="calculateTrip()"></div>
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4">
+                        <span class="text-xl">🏍️</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800" id="kpi-km">1.020</h3>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-sm text-gray-500 font-medium">KMs Planeados</span>
+                        <span class="text-sm font-medium text-green-500">+ Expocrato</span>
+                    </div>
                 </div>
-                <div class="glass-card calc-result">
-                    <div class="input-group"><span>Custo Estimado Combustível</span><h2 id="res-cost" style="color: var(--accent-orange)">R$ 0,00</h2></div>
-                    <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 15px 0;">
-                    <div class="input-group"><span>Meta de Hidratação Total</span><h2 id="res-water" style="color: var(--accent-blue)">0 Litros</h2></div>
-                    <p style="font-size: 11px; color: var(--text-dim); margin-top: 20px;">* Baseado no consumo real da Fazer 250 (29km/L).</p>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4">
+                        <span class="text-xl">⛽</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800" id="kpi-fuel">R$ 250</h3>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-sm text-gray-500 font-medium">Gasto Previsto</span>
+                        <span class="text-sm font-medium text-gray-400">29 km/L</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4">
+                        <span class="text-xl">💧</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800" id="kpi-water">10.5L</h3>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-sm text-gray-500 font-medium">Hidratação Total</span>
+                        <span class="text-sm font-medium text-blue-500">3.5L/Dia</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <div class="flex items-center justify-center w-11 h-11 bg-gray-100 rounded-full mb-4">
+                        <span class="text-xl">💰</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800" id="kpi-total">R$ 865</h3>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-sm text-gray-500 font-medium">Orçamento Viagem</span>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <section id="view-checklist" class="view-content">
-            <h1 style="margin-bottom: 30px;">Checklist Pré-Viagem</h1>
-            <div class="planner-grid">
-                <div class="glass-card">
-                    <h3 style="color: var(--accent-orange); margin-bottom: 20px;">A Moto (Fazer 250)</h3>
-                    <div class="check-item"><input type="checkbox"> Pneus (30 Diant / 34 Tras)</div>
-                    <div class="check-item"><input type="checkbox"> Nível do Óleo</div>
-                    <div class="check-item"><input type="checkbox"> Lubrificação da Corrente</div>
-                    <div class="check-item"><input type="checkbox"> Kit de Ferramentas</div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                
+                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Projeção de Custos 2026</h3>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="barChart"></canvas>
+                    </div>
                 </div>
-                <div class="glass-card">
-                    <h3 style="color: var(--accent-purple); margin-bottom: 20px;">O Piloto</h3>
-                    <div class="check-item"><input type="checkbox"> Jaqueta UV / Couro</div>
-                    <div class="check-item"><input type="checkbox"> Luvas e Bota</div>
-                    <div class="check-item"><input type="checkbox"> Copo Térmico (473ml)</div>
-                    <div class="check-item"><input type="checkbox"> Documentação (CNH/CRLV)</div>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm flex flex-col items-center justify-between">
+                    <div class="w-full">
+                        <h3 class="text-lg font-bold text-gray-800">Progresso do Orçamento</h3>
+                        <p class="text-sm text-gray-500">Limite definido para a próxima viagem</p>
+                    </div>
+                    <div class="w-48 h-48 relative mt-4">
+                        <canvas id="gaugeChart"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pt-8">
+                            <span class="text-3xl font-bold text-gray-800">75%</span>
+                            <span class="text-xs text-green-500 font-medium">+ R$ 250 disponíveis</span>
+                        </div>
+                    </div>
+                    <div class="w-full grid grid-cols-2 gap-4 text-center mt-6 border-t border-gray-100 pt-4">
+                        <div>
+                            <p class="text-xs text-gray-500">Limite</p>
+                            <p class="text-sm font-bold text-gray-800">R$ 1.115</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Alocado</p>
+                            <p class="text-sm font-bold text-green-500">R$ 865</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <section id="view-kanban" class="view-content">
-            <h1 style="margin-bottom: 30px;">Logística & Reservas</h1>
-            <div class="kanban-board">
-                <div class="kanban-col"><div class="kanban-title">Pesquisa</div>
-                    <div class="kanban-task">Restaurantes em Iguatu</div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800">Base de Dados (Via Google Sheets)</h3>
+                    <button onclick="fetchGoogleSheetsData()" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-sm font-medium rounded text-gray-600 transition">Atualizar Dados</button>
                 </div>
-                <div class="kanban-col"><div class="kanban-title">Confirmar</div>
-                    <div class="kanban-task" style="border-color: var(--accent-orange);">Check-in Hotel Crato (R$ 415)</div>
-                    <div class="kanban-task">Posto com Gasolina Aditivada</div>
-                </div>
-                <div class="kanban-col"><div class="kanban-title">Finalizado</div>
-                    <div class="kanban-task" style="border-color: #2ecc71;">Roteiro de Shows (Dom 12/07)</div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Item de Custo</th>
+                                <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Categoria</th>
+                                <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Valor Estimado</th>
+                                <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sheets-data-body" class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-gray-800">A carregar dados...</td>
+                                <td></td><td></td><td></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </section>
 
+        </div>
     </main>
-</div>
 
-<script>
-    function showView(viewId, el) {
-        document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('view-' + viewId).classList.add('active');
-        el.classList.add('active');
-        if(viewId === 'planner') calculateTrip();
-    }
-
-    function calculateTrip() {
-        const km = document.getElementById('plan-km').value;
-        const days = document.getElementById('plan-days').value;
-        const price = document.getElementById('plan-price').value;
+    <script>
+        // --- 1. CONFIGURAÇÃO DOS GRÁFICOS (CHART.JS) ---
         
-        const fuelCost = (km / 29) * price;
-        const waterTotal = days * 3.5;
+        // Gráfico de Barras (Custos)
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                datasets: [{
+                    label: 'Investimento em Viagens (R$)',
+                    data: [0, 0, 180, 0, 0, 0, 865, 0, 0, 0, 0, 0], // Fortim em Março, Expocrato em Julho
+                    backgroundColor: '#3C50E0',
+                    borderRadius: 4,
+                    barThickness: 12
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
 
-        document.getElementById('res-cost').innerText = `R$ ${fuelCost.toLocaleString('pt-br', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('res-water').innerText = `${waterTotal} Litros`;
-    }
+        // Gráfico Semi-Círculo (Gauge)
+        const ctxGauge = document.getElementById('gaugeChart').getContext('2d');
+        new Chart(ctxGauge, {
+            type: 'doughnut',
+            data: {
+                labels: ['Alocado', 'Disponível'],
+                datasets: [{
+                    data: [75, 25],
+                    backgroundColor: ['#3C50E0', '#E2E8F0'],
+                    borderWidth: 0,
+                    cutout: '80%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                circumference: 180,
+                rotation: -90,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
 
-    // Interatividade simples do checklist
-    document.querySelectorAll('.check-item input').forEach(input => {
-        input.onchange = (e) => {
-            e.target.parentElement.classList.toggle('done', e.target.checked);
+        // --- 2. INTEGRAÇÃO COM GOOGLE SHEETS ---
+        
+        /* * COMO PREPARAR O GOOGLE SHEETS:
+         * 1. Crie a planilha com as colunas: Item, Categoria, Valor, Status
+         * 2. Vá a Ficheiro > Partilhar > Publicar na Web
+         * 3. Escolha "Valores separados por vírgulas (.csv)"
+         * 4. Copie o link fornecido e cole na variável abaixo.
+         */
+        
+        // Link de exemplo (Este URL precisa ser substituído pelo link real gerado no seu Google Sheets)
+        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-EXEMPLO_AQUI/pub?output=csv';
+
+        async function fetchGoogleSheetsData() {
+            const tbody = document.getElementById('sheets-data-body');
+            
+            try {
+                // Em ambiente real, o fetch() abaixo é ativado.
+                // const response = await fetch(SHEET_CSV_URL);
+                // const data = await response.text();
+                
+                // Simulação dos dados que o CSV retornaria:
+                const simulatedCSVData = `Item,Categoria,Valor,Status
+Gasolina (Ida/Volta),Transporte,250.00,Planeado
+Hospedagem Crato,Estadia,415.00,Pendente
+Alimentação Geral,Alimentação,175.00,Planeado
+Água / Hidratação,Saúde,25.00,Planeado`;
+
+                // Processar CSV simples
+                const rows = simulatedCSVData.split('\n');
+                tbody.innerHTML = ''; // Limpar tabela
+                
+                // Começa em 1 para saltar o cabeçalho
+                for (let i = 1; i < rows.length; i++) {
+                    if (!rows[i].trim()) continue;
+                    const cols = rows[i].split(',');
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition";
+                    
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 text-sm font-medium text-gray-800">${cols[0]}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${cols[1]}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-800">R$ ${cols[2]}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cols[3] === 'Planeado' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${cols[3]}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-sm text-red-500">Erro ao ligar ao Google Sheets. Verifique o link CSV.</td></tr>`;
+                console.error("Erro no Fetch:", error);
+            }
         }
-    });
-</script>
 
+        // Carregar dados simulados ao iniciar
+        fetchGoogleSheetsData();
+    </script>
 </body>
 </html>
