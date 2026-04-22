@@ -3,262 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mu Trips v03</title>
+    <title>Mu Trips SaaS v04</title>
     <style>
         :root {
-            --bg: #0f0f12;
-            --card: rgba(28, 28, 35, 0.7);
+            --bg: #0a0a0c;
+            --sidebar: #121217;
+            --card: rgba(30, 30, 38, 0.6);
             --accent-purple: #c729f2;
             --accent-blue: #0ae6f2;
             --accent-orange: #f28705;
-            --text-p: #9a9a9f;
-            --text-h: #ffffff;
-            --glass-border: rgba(255,255,255,0.1);
+            --text-main: #f0f0f5;
+            --text-dim: #71717a;
+            --glass-border: rgba(255, 255, 255, 0.05);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); overflow-x: hidden; }
 
-        body {
-            background-color: var(--bg);
-            color: var(--text-h);
+        /* --- LAYOUT ESTRUTURAL --- */
+        .app-shell {
             display: flex;
-            justify-content: center;
-            padding: 20px;
             min-height: 100vh;
         }
 
-        .app-container {
-            width: 100%;
-            max-width: 450px;
+        /* Sidebar - Oculta no mobile */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 30px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
         }
 
-        /* Filtro de Viagens */
-        .filter-section {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            scrollbar-width: none;
-        }
-        .filter-section::-webkit-scrollbar { display: none; }
-
-        .chip {
-            background: var(--card);
-            padding: 10px 20px;
-            border-radius: 50px;
-            border: 1px solid var(--glass-border);
-            white-space: nowrap;
-            cursor: pointer;
-            font-size: 13px;
-            transition: 0.3s;
-            color: var(--text-p);
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .chip.active {
-            background: var(--accent-orange);
-            color: white;
-            border-color: var(--accent-orange);
-            box-shadow: 0 4px 15px rgba(242, 135, 5, 0.3);
-        }
-
+        /* --- COMPONENTES --- */
         .glass-card {
             background: var(--card);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 24px;
-            transition: all 0.5s ease;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
         }
 
-        /* Gráfico Dinâmico */
-        .chart-container {
+        /* Grid de Dashboards Desktop */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .trip-selector {
             display: flex;
-            justify-content: center;
-            margin: 10px 0;
-            position: relative;
-        }
-        .chart-info {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-        .chart-info span { display: block; color: var(--text-p); font-size: 10px; text-transform: uppercase; }
-        .chart-info b { font-size: 24px; transition: 0.3s; }
-
-        .circle-bg { fill: none; stroke: #222; stroke-width: 10; }
-        .circle-progress { 
-            fill: none; stroke: var(--accent-orange); stroke-width: 10; 
-            stroke-dasharray: 440; stroke-dashoffset: 440;
-            transition: stroke-dashoffset 0.8s ease-in-out;
-            stroke-linecap: round;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .stat-item { padding: 15px; border-radius: 16px; background: rgba(255,255,255,0.03); }
-        .stat-item h4 { font-size: 10px; color: var(--text-p); text-transform: uppercase; margin-bottom: 5px; }
-        .stat-item p { font-size: 18px; font-weight: 700; }
+        .trip-option {
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid transparent;
+        }
 
-        /* Lista de Itens */
-        .item-list { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
-        .item { display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.5s ease; }
-        .item-left { display: flex; gap: 12px; align-items: center; }
-        .icon-box { width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; }
-        .item-info b { font-size: 14px; display: block; }
-        .item-info span { font-size: 11px; color: var(--text-p); }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .trip-option:hover { background: rgba(255,255,255,0.08); }
+        .trip-option.active {
+            border-color: var(--accent-orange);
+            background: rgba(242, 135, 5, 0.1);
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card { text-align: left; }
+        .kpi-card span { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .kpi-card h2 { font-size: 24px; margin-top: 5px; color: var(--text-main); }
+
+        /* Lista Detalhada */
+        .detail-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .detail-table th { text-align: left; padding: 12px; color: var(--text-dim); font-size: 12px; border-bottom: 1px solid var(--glass-border); }
+        .detail-table td { padding: 16px 12px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+
+        /* --- RESPONSIVIDADE (MOBILE) --- */
+        @media (max-width: 850px) {
+            .sidebar { display: none; } /* Esconde sidebar no mobile */
+            .main-content { padding: 20px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .kpi-row { grid-template-columns: 1fr; }
+            
+            .header-mobile {
+                display: block;
+                margin-bottom: 20px;
+            }
+            
+            /* Filtro horizontal estilo chip no mobile */
+            .mobile-filter {
+                display: flex;
+                overflow-x: auto;
+                gap: 10px;
+                padding-bottom: 15px;
+                scrollbar-width: none;
+            }
+        }
+
+        @media (min-width: 851px) {
+            .mobile-filter { display: none; }
+            .header-mobile { display: none; }
+        }
+
+        /* Animação de entrada */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    
-    <div class="header">
-        <h2 id="trip-title" style="margin-bottom: 5px;">Viagens Ativas</h2>
-        <p id="trip-date" style="color: var(--text-p); font-size: 13px;">Selecione um destino</p>
-    </div>
-
-    <div class="filter-section" id="filter-bar">
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2 style="color: var(--accent-orange); letter-spacing: -1px;">MU <span style="color: #fff;">TRIPS</span></h2>
         </div>
+        <nav class="trip-selector">
+            <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px;">HISTÓRICO & PLANOS</p>
+            <div id="sidebar-list">
+                </div>
+        </nav>
+    </aside>
 
-    <div class="glass-card">
-        <div class="chart-container">
-            <svg width="160" height="160">
-                <circle class="circle-bg" cx="80" cy="80" r="70" />
-                <circle class="circle-progress" id="main-progress" cx="80" cy="80" r="70" />
-            </svg>
-            <div class="chart-info">
-                <span>Investimento</span>
-                <b id="total-value">R$ 0</b>
-            </div>
-        </div>
+    <main class="main-content">
         
-        <div class="stats-grid">
-            <div class="stat-item">
-                <h4>Gasolina</h4>
-                <p id="fuel-stat" style="color: var(--accent-orange)">R$ 0</p>
+        <header class="header-mobile">
+            <h2 style="margin-bottom: 15px;">Minhas Viagens</h2>
+            <div class="mobile-filter" id="mobile-filter-list">
+                </div>
+        </header>
+
+        <div id="trip-content" class="fade-in">
+            
+            <div class="kpi-row">
+                <div class="glass-card kpi-card">
+                    <span>Investimento Total</span>
+                    <h2 id="total-val" style="color: var(--accent-orange);">R$ 0</h2>
+                </div>
+                <div class="glass-card kpi-card">
+                    <span>Transporte / Gasolina</span>
+                    <h2 id="fuel-val">R$ 0</h2>
+                </div>
+                <div class="glass-card kpi-card">
+                    <span>Estadia / Hospedagem</span>
+                    <h2 id="stay-val">R$ 0</h2>
+                </div>
             </div>
-            <div class="stat-item">
-                <h4>Hospedagem</h4>
-                <p id="lodging-stat" style="color: var(--accent-purple)">R$ 0</p>
+
+            <div class="dashboard-grid">
+                <div class="glass-card">
+                    <h3 style="font-size: 16px; margin-bottom: 20px;">Relatório Detalhado</h3>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>CATEGORIA</th>
+                                <th>DESCRIÇÃO</th>
+                                <th>VALOR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="glass-card">
+                    <h3 style="font-size: 16px; margin-bottom: 15px;">Contexto da Trip</h3>
+                    <p id="trip-desc" style="color: var(--text-dim); font-size: 14px; line-height: 1.6;">
+                        Selecione uma viagem para ver as notas e informações de logística.
+                    </p>
+                    <div id="extra-info" style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+                        </div>
+                </div>
             </div>
+
         </div>
-    </div>
-
-    <div class="glass-card">
-        <h4 style="font-size: 11px; color: var(--text-p); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Detalhamento Noir</h4>
-        <div class="item-list" id="details-list">
-            </div>
-    </div>
-
+    </main>
 </div>
 
 <script>
-    // Seus dados de viagens
-    const trips = [
+    const tripsData = [
         {
             id: 'expocrato',
             name: 'Expocrato 2026',
-            date: '11/07 a 13/07 • Fazer 250',
-            total: 865,
-            fuel: 250,
-            lodging: 415,
-            percent: 70, // Representação no gráfico
-            items: [
-                { icon: '⛽', label: 'Combustível', desc: '1.020 km (29km/L)', price: 250 },
-                { icon: '🏨', label: 'Hospedagem', desc: 'Crato (Sáb-Seg)', price: 415 },
-                { icon: '🍲', label: 'Alimentação', desc: 'Refeições + H2O', price: 200 }
-            ]
-        },
-        {
-            id: 'fortim',
-            name: 'Bate-Volta Fortim',
-            date: 'Março 2026 • Fazer 250',
-            total: 180,
-            fuel: 60,
-            lodging: 0,
-            percent: 30,
-            items: [
-                { icon: '⛽', label: 'Combustível', desc: 'BR-116/Litoral', price: 60 },
-                { icon: '🍛', label: 'Almoço Peixada', desc: 'Beira Mar', price: 80 },
-                { icon: '💧', label: 'Hidratação', desc: 'Meta 3.5L', price: 40 }
+            total: '865,00',
+            fuel: '250,00',
+            stay: '415,00',
+            desc: 'Viagem solo de Fortaleza para o Crato. Foco nos shows de domingo (Capital Inicial e Jota Quest). Rodagem direta via BR-116/CE-060.',
+            info: '🏍️ 1.020 km totais | 💧 Meta 3.5L/dia',
+            details: [
+                { cat: 'Combustível', item: 'Gasolina (29km/L)', val: '250,00' },
+                { cat: 'Hospedagem', item: 'Crato (Sáb-Seg)', val: '415,00' },
+                { cat: 'Alimentação', item: 'Refeições + Lanches', val: '175,00' },
+                { cat: 'Suporte', item: 'Hidratação Especial', val: '25,00' }
             ]
         },
         {
             id: 'chile',
-            name: 'Punta Arenas (Chile)',
-            date: 'Dezembro 2027 • Planejamento',
-            total: 12500,
-            fuel: 0,
-            lodging: 4500,
-            percent: 90,
-            items: [
-                { icon: '✈️', label: 'Aéreo Fortaleza/Chile', desc: 'Ida e Volta', price: 3500 },
-                { icon: '❄️', label: 'Hospedagem Neve', desc: '10 Dias', price: 4500 },
-                { icon: '🧥', label: 'Equipamento Frio', desc: 'Jaquetas e Botas', price: 2000 },
-                { icon: '🍷', label: 'Gastronomia', desc: 'Vinhos e Jantares', price: 2500 }
+            name: 'Chile (2027)',
+            total: '12.500,00',
+            fuel: '3.500,00',
+            stay: '4.500,00',
+            desc: 'Expedição para o frio. Roteiro focado em Punta Arenas e Torres del Paine no final do ano.',
+            info: '❄️ Clima Extremo | ✈️ Aéreo incluso',
+            details: [
+                { cat: 'Transporte', item: 'Aéreo For/Chile (Ida/Volta)', val: '3.500,00' },
+                { cat: 'Estadia', item: 'Hotéis 10 Noites', val: '4.500,00' },
+                { cat: 'Equipamento', item: 'Vestuário Térmico', val: '2.000,00' },
+                { cat: 'Lazer', item: 'Passeios e Gastronomia', val: '2.500,00' }
             ]
         }
     ];
 
-    function loadTrip(tripId) {
-        const trip = trips.find(t => t.id === tripId);
+    function selectTrip(id) {
+        const trip = tripsData.find(t => t.id === id);
         
-        // Atualiza textos
-        document.getElementById('trip-title').innerText = trip.name;
-        document.getElementById('trip-date').innerText = trip.date;
-        document.getElementById('total-value').innerText = `R$ ${trip.total.toLocaleString('pt-br')}`;
-        document.getElementById('fuel-stat').innerText = `R$ ${trip.fuel}`;
-        document.getElementById('lodging-stat').innerText = `R$ ${trip.lodging}`;
+        // Atualiza KPIs com animação
+        document.getElementById('total-val').innerText = `R$ ${trip.total}`;
+        document.getElementById('fuel-val').innerText = `R$ ${trip.fuel}`;
+        document.getElementById('stay-val').innerText = `R$ ${trip.stay}`;
+        document.getElementById('trip-desc').innerText = trip.desc;
+        document.getElementById('extra-info').innerHTML = `<span style="font-size: 12px; color: var(--accent-blue);">${trip.info}</span>`;
 
-        // Atualiza Gráfico (stroke-dashoffset: 440 é vazio, 0 é cheio)
-        const offset = 440 - (440 * trip.percent / 100);
-        document.getElementById('main-progress').style.strokeDashoffset = offset;
+        // Atualiza Tabela
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = trip.details.map(d => `
+            <tr>
+                <td style="color: var(--accent-purple); font-weight: 600;">${d.cat}</td>
+                <td>${d.item}</td>
+                <td style="text-align: right; font-weight: bold;">R$ ${d.val}</td>
+            </tr>
+        `).join('');
 
-        // Atualiza Lista
-        const listContainer = document.getElementById('details-list');
-        listContainer.innerHTML = '';
-        trip.items.forEach(item => {
-            listContainer.innerHTML += `
-                <div class="item">
-                    <div class="item-left">
-                        <div class="icon-box">${item.icon}</div>
-                        <div class="item-info">
-                            <b>${item.label}</b>
-                            <span>${item.desc}</span>
-                        </div>
-                    </div>
-                    <div class="item-price">R$ ${item.price}</div>
-                </div>
-            `;
+        // Sincroniza classes Ativas (Sidebar e Mobile)
+        document.querySelectorAll('.trip-option, .chip').forEach(el => {
+            el.classList.toggle('active', el.dataset.id === id);
         });
 
-        // Atualiza chips
-        document.querySelectorAll('.chip').forEach(chip => {
-            chip.classList.toggle('active', chip.dataset.id === tripId);
-        });
+        // Trigger animação de fade
+        const content = document.getElementById('trip-content');
+        content.classList.remove('fade-in');
+        void content.offsetWidth; // Force reflow
+        content.classList.add('fade-in');
     }
 
-    // Inicializa Filtros
-    const filterBar = document.getElementById('filter-bar');
-    trips.forEach((trip, index) => {
+    // Inicialização
+    const sidebar = document.getElementById('sidebar-list');
+    const mobileFilter = document.getElementById('mobile-filter-list');
+
+    tripsData.forEach(trip => {
+        // Sidebar (Desktop)
+        const opt = document.createElement('div');
+        opt.className = 'trip-option';
+        opt.dataset.id = trip.id;
+        opt.innerHTML = `<h4 style="font-size: 14px;">${trip.name}</h4><small style="color: var(--text-dim)">R$ ${trip.total}</small>`;
+        opt.onclick = () => selectTrip(trip.id);
+        sidebar.appendChild(opt);
+
+        // Chips (Mobile)
         const chip = document.createElement('div');
-        chip.className = `chip ${index === 0 ? 'active' : ''}`;
-        chip.innerText = trip.name;
+        chip.className = 'chip trip-option'; // reaproveitando estilos básicos
+        chip.style.padding = '8px 15px';
+        chip.style.borderRadius = '20px';
+        chip.style.fontSize = '12px';
+        chip.style.whiteSpace = 'nowrap';
         chip.dataset.id = trip.id;
-        chip.onclick = () => loadTrip(trip.id);
-        filterBar.appendChild(chip);
+        chip.innerText = trip.name;
+        chip.onclick = () => selectTrip(trip.id);
+        mobileFilter.appendChild(chip);
     });
 
-    // Carrega a primeira viagem por padrão
-    loadTrip(trips[0].id);
-
+    // Iniciar com a primeira
+    selectTrip(tripsData[0].id);
 </script>
+
 </body>
 </html>
