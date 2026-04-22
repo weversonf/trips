@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mu Trips v11</title>
+    <title>Mu Trips v12</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -23,6 +23,8 @@
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-gray-800">
+
+    <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden transition-opacity" onclick="toggleSidebar()"></div>
 
     <div id="modal-add-trip" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 m-4 transform scale-95 transition-transform duration-300" id="modal-content">
@@ -63,7 +65,7 @@
 
                 <div class="bg-primary-light p-3 rounded-md border border-blue-100 flex justify-between items-center mt-2">
                     <span class="text-sm font-medium text-primary">⛽ Combustível Estimado:</span>
-                    <span class="text-lg font-bold text-primary" id="preview-fuel-cost">R$ 0.00</span>
+                    <span class="text-lg font-bold text-primary" id="preview-fuel-cost">R$ 0,00</span>
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3">
@@ -74,12 +76,15 @@
         </div>
     </div>
 
-    <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 z-40">
-        <div class="h-16 flex items-center px-6 border-b border-gray-200">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-gray-200">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold">M</div>
                 <span class="text-xl font-bold text-gray-800 tracking-tight">Mu Trips</span>
             </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-gray-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
         <div class="flex-1 overflow-y-auto py-6 px-4">
             <p class="text-xs font-semibold text-gray-400 mb-4 px-2 uppercase tracking-wider">Gestão</p>
@@ -87,41 +92,41 @@
                 <a href="#" class="flex items-center gap-3 px-3 py-2 bg-primary-light text-primary rounded-md font-medium">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg> Painel de Viagens
                 </a>
-                <a href="#" class="flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-md font-medium transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> Definições
-                </a>
             </nav>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full">
         
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
-            <div class="flex items-center w-full max-w-md">
-                <select id="tripSelector" onchange="loadTripData()" class="w-full bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 rounded-md outline-none focus:border-primary focus:ring-1 focus:ring-primary font-medium cursor-pointer shadow-sm">
-                    </select>
-            </div>
-            <div class="flex items-center gap-4">
-                <button onclick="openModal()" class="bg-white text-primary border border-primary px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-light shadow-sm transition flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Nova Viagem
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shrink-0">
+            <div class="flex items-center w-full max-w-md gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 text-gray-500 rounded-md hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <button onclick="alert('Funcionalidade de Fetch completo chegará na v12')" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-opacity-90 shadow-sm transition flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Sincronizar Sheets
+                <select id="tripSelector" onchange="loadTripData()" class="w-full bg-gray-50 border border-gray-300 text-gray-700 py-2 px-3 rounded-md outline-none focus:border-primary focus:ring-1 focus:ring-primary font-medium cursor-pointer shadow-sm text-sm lg:text-base">
+                </select>
+            </div>
+            <div class="flex items-center gap-2 lg:gap-4">
+                <button onclick="openModal()" class="bg-white text-primary border border-primary px-3 lg:px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-light shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> <span class="hidden md:block">Nova Viagem</span>
+                </button>
+                <button class="bg-primary text-white px-3 lg:px-4 py-2 rounded-md text-sm font-medium hover:bg-opacity-90 shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> <span class="hidden md:block">Sincronizar Sheets</span>
                 </button>
             </div>
         </header>
 
         <div class="bg-white border-b border-gray-200 px-6 pt-4 flex gap-6 overflow-x-auto no-scrollbar shrink-0">
-            <button onclick="switchTab('resumo')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-primary text-primary">📊 Resumo Diário</button>
-            <button onclick="switchTab('programacao')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700">🗓️ Programação</button>
-            <button onclick="switchTab('compras')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700">🛒 Compras & Bebidas</button>
-            <button onclick="switchTab('pessoas')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700">👥 Pessoas (Racha)</button>
+            <button onclick="switchTab('resumo')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap">📊 Resumo Diário</button>
+            <button onclick="switchTab('programacao')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">🗓️ Programação</button>
+            <button onclick="switchTab('compras')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">🛒 Compras & Bebidas</button>
+            <button onclick="switchTab('pessoas')" class="tab-btn pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">👥 Pessoas (Racha)</button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex-1 overflow-y-auto p-4 lg:p-6 relative">
             
             <div id="tab-resumo" class="tab-content active w-full max-w-7xl mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
                         <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Custo Total</p>
                         <h3 class="text-2xl font-bold text-gray-800" id="kpi-total">R$ 0</h3>
@@ -144,46 +149,110 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                         <h3 class="text-lg font-bold text-gray-800 mb-4">Distribuição do Orçamento</h3>
-                        <div class="h-64"><canvas id="expenseChart"></canvas></div>
+                        <div class="h-64 relative"><canvas id="expenseChart"></canvas></div>
                     </div>
                     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm flex flex-col justify-center items-center text-center">
                         <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-2xl mb-4">💧</div>
                         <h3 class="text-lg font-bold text-gray-800">Alerta de Hidratação</h3>
-                        <p class="text-sm text-gray-500 mt-2 max-w-sm">Para esta viagem de <b id="water-days">0</b> dias, a sua meta pessoal de 3.5L diários exige um total de <b id="water-total" class="text-primary">0 Litros</b> de água mineral na bagagem.</p>
+                        <p class="text-sm text-gray-500 mt-2 max-w-sm">Para esta viagem de <b id="water-days">0</b> dias, a sua meta de 3.5L diários exige <b id="water-total" class="text-primary">0 Litros</b> de água na bagagem.</p>
                     </div>
                 </div>
             </div>
 
-            <div id="tab-programacao" class="tab-content w-full max-w-5xl mx-auto"><div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"><table class="w-full text-left border-collapse"><thead class="bg-gray-50 border-b border-gray-200"><tr><th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Data / Dia</th><th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Horário</th><th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Atividade</th></tr></thead><tbody id="table-schedule" class="divide-y divide-gray-100"></tbody></table></div></div>
-            
-            <div id="tab-compras" class="tab-content w-full max-w-5xl mx-auto"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"><div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between"><span>🛒 Mercado & Comidas</span><span id="total-groceries" class="text-primary">R$ 0</span></div><ul id="list-groceries" class="divide-y divide-gray-100 p-2"></ul></div><div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"><div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between"><span>🍻 Bebidas</span><span id="total-drinks" class="text-primary">R$ 0</span></div><ul id="list-drinks" class="divide-y divide-gray-100 p-2"></ul></div></div></div>
-            
-            <div id="tab-pessoas" class="tab-content w-full max-w-5xl mx-auto"><div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"><table class="w-full text-left border-collapse"><thead class="bg-gray-50 border-b border-gray-200"><tr><th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Participante</th><th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Valor Pago (Sinal)</th><th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Parte Ideal (Racha)</th><th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status do Acerto</th></tr></thead><tbody id="table-people" class="divide-y divide-gray-100"></tbody></table></div></div>
+            <div id="tab-programacao" class="tab-content w-full max-w-5xl mx-auto">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Data / Dia</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Horário</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Atividade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-schedule" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-compras" class="tab-content w-full max-w-5xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between">
+                            <span>🛒 Mercado & Comidas</span>
+                            <span id="total-groceries" class="text-primary">R$ 0</span>
+                        </div>
+                        <ul id="list-groceries" class="divide-y divide-gray-100 p-2"></ul>
+                    </div>
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between">
+                            <span>🍻 Bebidas</span>
+                            <span id="total-drinks" class="text-primary">R$ 0</span>
+                        </div>
+                        <ul id="list-drinks" class="divide-y divide-gray-100 p-2"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-pessoas" class="tab-content w-full max-w-5xl mx-auto">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Participante</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Valor Pago (Sinal)</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Parte Ideal (Racha)</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status do Acerto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-people" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
     <script>
         // === CONFIGURAÇÕES E ESTADO ===
         const sysConfig = {
-            consumoMoto: 29, // km/L
+            consumoMoto: 29, // km/L (Fazer 250)
             precoGasolina: 6.80,
             metaAgua: 3.5 
         };
 
-        // AQUI ESTÁ A SUA URL DO APPS SCRIPT
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0Vw_RZ7aDoQ5QG5P63gxnbpEmqFve3LpErThzDwVze2P8CvpZXf81mM2EI2cctvB1/exec';
 
         const dbTrips = [
             {
                 id: 'cascavel', name: 'Cascavel, CE', kmTotal: 150, days: 2, accommodation: 250.00,
-                schedule: [], groceries: [], drinks: [],
+                schedule: [
+                    { date: 'Sábado (15/08)', time: '07:30', activity: 'Ponto de Encontro' },
+                    { date: 'Sábado (15/08)', time: '09:00', activity: 'Chegada na Praia' }
+                ], 
+                groceries: [
+                    { item: 'Carne e Carvão', qty: 'Mix', price: 120.00 }
+                ], 
+                drinks: [
+                    { item: 'Cerveja e Água', qty: 'Mix', price: 125.00 }
+                ],
                 participants: [{ name: 'Weverson', paid: 200.00 }, { name: 'Pry', paid: 150.00 }]
             }
         ];
 
         let myChart = null;
 
-        // === MODAL E INTEGRAÇÃO GOOGLE SHEETS ===
+        // === UI: SIDEBAR E MODAL ===
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
         function openModal() {
             const modal = document.getElementById('modal-add-trip');
             const content = document.getElementById('modal-content');
@@ -199,17 +268,17 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
             
             document.getElementById('form-new-trip').reset();
-            document.getElementById('preview-fuel-cost').innerText = "R$ 0.00";
+            document.getElementById('preview-fuel-cost').innerText = "R$ 0,00";
         }
 
         function calcPreviewFuel() {
             const km = parseFloat(document.getElementById('trip-km').value) || 0;
             const fuelPreview = (km / sysConfig.consumoMoto) * sysConfig.precoGasolina;
-            // Guardando o valor limpo em um data-attribute para o envio via API
             document.getElementById('preview-fuel-cost').dataset.rawvalue = fuelPreview;
             document.getElementById('preview-fuel-cost').innerText = fuelPreview.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
+        // === INTEGRAÇÃO GOOGLE SHEETS ===
         async function saveTrip(e) {
             e.preventDefault();
             
@@ -218,7 +287,6 @@
             btn.innerText = "A Salvar na Nuvem...";
             btn.disabled = true;
 
-            // 1. Prepara os Dados
             const tripData = {
                 id: 't' + Date.now(),
                 nome: document.getElementById('trip-name').value,
@@ -229,18 +297,15 @@
                 combustivel: parseFloat(document.getElementById('preview-fuel-cost').dataset.rawvalue) || 0
             };
 
-            // 2. Envia para o Google Sheets via API
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Essencial para requisições do navegador
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(tripData)
                 });
                 
-                // NOTA: 'no-cors' não devolve um response legível, assumimos sucesso se a promise não quebrar.
-                
-                // 3. Atualiza o Sistema Local (Frontend)
+                // Adiciona no frontend
                 const newTripLocal = {
                     id: tripData.id,
                     name: tripData.nome,
@@ -248,7 +313,7 @@
                     days: tripData.dias,
                     accommodation: tripData.estadia,
                     schedule: [],
-                    groceries: [{ item: 'Verba Geral de Alimentação', qty: 'Estimativa', price: tripData.alimentacao }],
+                    groceries: [{ item: 'Verba Geral (Adicionado via Novo Roteiro)', qty: '-', price: tripData.alimentacao }],
                     drinks: [],
                     participants: [{ name: 'Weverson', paid: 0 }]
                 };
@@ -261,7 +326,7 @@
                 
                 loadTripData();
                 closeModal();
-                alert("Viagem salva no Banco de Dados (BD_Trip) com sucesso!");
+                alert("Viagem salva no Banco de Dados com sucesso!");
 
             } catch (error) {
                 console.error("Erro:", error);
@@ -272,7 +337,7 @@
             }
         }
 
-        // === UI E MOTOR DE RENDERIZAÇÃO ===
+        // === LÓGICA DE RENDERIZAÇÃO ===
         function init() {
             const selector = document.getElementById('tripSelector');
             dbTrips.forEach(trip => { selector.innerHTML += `<option value="${trip.id}">📍 Planilha: ${trip.name}</option>`; });
@@ -299,22 +364,26 @@
             const selectedId = document.getElementById('tripSelector').value;
             const trip = dbTrips.find(t => t.id === selectedId);
 
+            if(!trip) return;
+
             const fuelCost = (trip.kmTotal / sysConfig.consumoMoto) * sysConfig.precoGasolina;
-            const groceriesCost = trip.groceries.reduce((sum, item) => sum + item.price, 0);
-            const drinksCost = trip.drinks.reduce((sum, item) => sum + item.price, 0);
+            const groceriesCost = (trip.groceries || []).reduce((sum, item) => sum + item.price, 0);
+            const drinksCost = (trip.drinks || []).reduce((sum, item) => sum + item.price, 0);
             const totalTripCost = fuelCost + trip.accommodation + groceriesCost + drinksCost;
             
-            const numPeople = trip.participants.length || 1; 
+            const numPeople = trip.participants && trip.participants.length > 0 ? trip.participants.length : 1; 
             const costPerPerson = totalTripCost / numPeople;
 
+            // Render Aba Resumo
             document.getElementById('kpi-total').innerText = `R$ ${totalTripCost.toFixed(2)}`;
             document.getElementById('kpi-fuel').innerText = `R$ ${fuelCost.toFixed(2)}`;
-            document.getElementById('kpi-km').innerText = `${trip.kmTotal} km totais`;
+            document.getElementById('kpi-km').innerText = `${trip.kmTotal} km totais (@ ${sysConfig.precoGasolina}/L)`;
             document.getElementById('kpi-stay').innerText = `R$ ${trip.accommodation.toFixed(2)}`;
             document.getElementById('kpi-per-person').innerText = `R$ ${costPerPerson.toFixed(2)}`;
             document.getElementById('water-days').innerText = trip.days;
             document.getElementById('water-total').innerText = (trip.days * sysConfig.metaAgua).toFixed(1);
 
+            // Gráfico
             if (myChart) myChart.destroy();
             const ctx = document.getElementById('expenseChart').getContext('2d');
             myChart = new Chart(ctx, {
@@ -330,9 +399,51 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
             });
             
-            // Popula listas (Lógica simplificada para não exceder o tamanho do código)
-            document.getElementById('list-groceries').innerHTML = trip.groceries.map(g => `<li class="px-5 py-2 flex justify-between"><span class="font-medium text-sm text-gray-700">${g.item}</span><span class="font-bold text-sm">R$ ${g.price}</span></li>`).join('');
+            // Render Aba Programação
+            const schedHtml = trip.schedule && trip.schedule.length > 0 ? trip.schedule.map(s => `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-3 text-sm font-medium text-gray-800 whitespace-nowrap">${s.date}</td>
+                    <td class="px-6 py-3 text-sm text-gray-500 whitespace-nowrap"><span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold">${s.time}</span></td>
+                    <td class="px-6 py-3 text-sm text-gray-700">${s.activity}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Nenhuma programação definida.</td></tr>';
+            document.getElementById('table-schedule').innerHTML = schedHtml;
+
+            // Render Aba Compras e Bebidas
             document.getElementById('total-groceries').innerText = `R$ ${groceriesCost.toFixed(2)}`;
+            document.getElementById('list-groceries').innerHTML = trip.groceries && trip.groceries.length > 0 ? trip.groceries.map(g => `
+                <li class="px-5 py-3 flex justify-between items-center border-b border-gray-50 last:border-0">
+                    <div><span class="font-medium text-sm text-gray-700">${g.item}</span><p class="text-xs text-gray-400">Qtd: ${g.qty || '-'}</p></div>
+                    <span class="font-bold text-sm">R$ ${g.price.toFixed(2)}</span>
+                </li>
+            `).join('') : '<li class="px-5 py-3 text-sm text-gray-500 text-center">Nenhum item adicionado.</li>';
+
+            document.getElementById('total-drinks').innerText = `R$ ${drinksCost.toFixed(2)}`;
+            document.getElementById('list-drinks').innerHTML = trip.drinks && trip.drinks.length > 0 ? trip.drinks.map(d => `
+                <li class="px-5 py-3 flex justify-between items-center border-b border-gray-50 last:border-0">
+                    <div><span class="font-medium text-sm text-gray-700">${d.item}</span><p class="text-xs text-gray-400">Qtd: ${d.qty || '-'}</p></div>
+                    <span class="font-bold text-sm">R$ ${d.price.toFixed(2)}</span>
+                </li>
+            `).join('') : '<li class="px-5 py-3 text-sm text-gray-500 text-center">Nenhuma bebida adicionada.</li>';
+
+            // Render Aba Pessoas (Racha)
+            const peopleHtml = trip.participants && trip.participants.length > 0 ? trip.participants.map(p => {
+                const balance = p.paid - costPerPerson;
+                let statusBadge = '';
+                if(balance > 0) statusBadge = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">A receber R$ ${Math.abs(balance).toFixed(2)}</span>`;
+                else if(balance < 0) statusBadge = `<span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">Deve R$ ${Math.abs(balance).toFixed(2)}</span>`;
+                else statusBadge = `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">Quitado</span>`;
+
+                return `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 text-sm font-bold text-gray-800 whitespace-nowrap">${p.name}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">R$ ${p.paid.toFixed(2)}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-primary whitespace-nowrap">R$ ${costPerPerson.toFixed(2)}</td>
+                    <td class="px-6 py-4">${statusBadge}</td>
+                </tr>
+                `;
+            }).join('') : '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhum participante adicionado.</td></tr>';
+            document.getElementById('table-people').innerHTML = peopleHtml;
         }
 
         document.addEventListener('DOMContentLoaded', init);
