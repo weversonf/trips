@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mu Trips v12</title>
+    <title>Mu Trips v13</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -20,12 +20,33 @@
         .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Estilos para edição */
+        .editable-input {
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 2px 4px;
+            border-radius: 4px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .editable-input:hover {
+            border-color: #e2e8f0;
+            background: #f8fafc;
+        }
+        .editable-input:focus {
+            border-color: #3C50E0;
+            background: #fff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(60, 80, 224, 0.1);
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-gray-800">
 
     <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden transition-opacity" onclick="toggleSidebar()"></div>
 
+    <!-- Modal Nova Viagem -->
     <div id="modal-add-trip" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 m-4 transform scale-95 transition-transform duration-300" id="modal-content">
             <div class="flex justify-between items-center mb-5 border-b pb-3">
@@ -110,8 +131,8 @@
                 <button onclick="openModal()" class="bg-white text-primary border border-primary px-3 lg:px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-light shadow-sm transition flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> <span class="hidden md:block">Nova Viagem</span>
                 </button>
-                <button class="bg-primary text-white px-3 lg:px-4 py-2 rounded-md text-sm font-medium hover:bg-opacity-90 shadow-sm transition flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> <span class="hidden md:block">Sincronizar Sheets</span>
+                <button onclick="exportData()" class="bg-primary text-white px-3 lg:px-4 py-2 rounded-md text-sm font-medium hover:bg-opacity-90 shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> <span class="hidden md:block">Exportar Dados</span>
                 </button>
             </div>
         </header>
@@ -178,17 +199,29 @@
 
             <div id="tab-compras" class="tab-content w-full max-w-5xl mx-auto">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Mercado -->
                     <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between">
+                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between items-center">
                             <span>🛒 Mercado & Comidas</span>
-                            <span id="total-groceries" class="text-primary">R$ 0</span>
+                            <div class="flex items-center gap-3">
+                                <span id="total-groceries" class="text-primary">R$ 0</span>
+                                <button onclick="addItem('groceries')" class="bg-primary text-white p-1 rounded-full hover:bg-opacity-90 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
                         </div>
                         <ul id="list-groceries" class="divide-y divide-gray-100 p-2"></ul>
                     </div>
+                    <!-- Bebidas -->
                     <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between">
+                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between items-center">
                             <span>🍻 Bebidas</span>
-                            <span id="total-drinks" class="text-primary">R$ 0</span>
+                            <div class="flex items-center gap-3">
+                                <span id="total-drinks" class="text-primary">R$ 0</span>
+                                <button onclick="addItem('drinks')" class="bg-primary text-white p-1 rounded-full hover:bg-opacity-90 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
                         </div>
                         <ul id="list-drinks" class="divide-y divide-gray-100 p-2"></ul>
                     </div>
@@ -197,6 +230,12 @@
 
             <div id="tab-pessoas" class="tab-content w-full max-w-5xl mx-auto">
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 font-bold text-gray-700 flex justify-between items-center">
+                        <span>👥 Participantes</span>
+                        <button onclick="addParticipant()" class="bg-primary text-white px-3 py-1 rounded text-sm font-medium hover:bg-opacity-90 transition flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Adicionar Pessoa
+                        </button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[600px]">
                             <thead class="bg-gray-50 border-b border-gray-200">
@@ -204,7 +243,8 @@
                                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Participante</th>
                                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Valor Pago (Sinal)</th>
                                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Parte Ideal (Racha)</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status do Acerto</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase w-10"></th>
                                 </tr>
                             </thead>
                             <tbody id="table-people" class="divide-y divide-gray-100"></tbody>
@@ -224,9 +264,8 @@
             metaAgua: 3.5 
         };
 
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0Vw_RZ7aDoQ5QG5P63gxnbpEmqFve3LpErThzDwVze2P8CvpZXf81mM2EI2cctvB1/exec';
-
-        const dbTrips = [
+        // Carregar do LocalStorage ou usar o padrão
+        let dbTrips = JSON.parse(localStorage.getItem('mu_trips_db')) || [
             {
                 id: 'cascavel', name: 'Cascavel, CE', kmTotal: 150, days: 2, accommodation: 250.00,
                 schedule: [
@@ -244,6 +283,10 @@
         ];
 
         let myChart = null;
+
+        function persist() {
+            localStorage.setItem('mu_trips_db', JSON.stringify(dbTrips));
+        }
 
         // === UI: SIDEBAR E MODAL ===
         function toggleSidebar() {
@@ -278,68 +321,119 @@
             document.getElementById('preview-fuel-cost').innerText = fuelPreview.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        // === INTEGRAÇÃO GOOGLE SHEETS ===
+        // === FUNÇÕES DE EDIÇÃO ===
+        function updateItem(type, index, field, value) {
+            const selectedId = document.getElementById('tripSelector').value;
+            const trip = dbTrips.find(t => t.id === selectedId);
+            if (!trip) return;
+
+            if (field === 'price') value = parseFloat(value) || 0;
+            trip[type][index][field] = value;
+            persist();
+            loadTripData();
+        }
+
+        function deleteItem(type, index) {
+            if (!confirm('Deseja excluir este item?')) return;
+            const selectedId = document.getElementById('tripSelector').value;
+            const trip = dbTrips.find(t => t.id === selectedId);
+            if (!trip) return;
+
+            trip[type].splice(index, 1);
+            persist();
+            loadTripData();
+        }
+
+        function addItem(type) {
+            const selectedId = document.getElementById('tripSelector').value;
+            const trip = dbTrips.find(t => t.id === selectedId);
+            if (!trip) return;
+
+            trip[type].push({ item: 'Novo Item', qty: '1', price: 0 });
+            persist();
+            loadTripData();
+        }
+
+        function updateParticipant(index, field, value) {
+            const selectedId = document.getElementById('tripSelector').value;
+            const trip = dbTrips.find(t => t.id === selectedId);
+            if (!trip) return;
+
+            if (field === 'paid') value = parseFloat(value) || 0;
+            trip.participants[index][field] = value;
+            persist();
+            loadTripData();
+        }
+
+        function deleteParticipant(index) {
+            if (!confirm('Deseja remover este participante?')) return;
+            const selectedId = document.getElementById('tripSelector').value;
+            const trip = dbTrips.find(t => t.id === selectedId);
+            if (!trip) return;
+
+            trip.participants.splice(index, 1);
+            persist();
+            loadTripData();
+        }
+
+        function addParticipant() {
+            const selectedId = document.getElementById('tripSelector').value;
+            const trip = dbTrips.find(t => t.id === selectedId);
+            if (!trip) return;
+
+            trip.participants.push({ name: 'Novo Participante', paid: 0 });
+            persist();
+            loadTripData();
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dbTrips, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", "mu_trips_backup.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // === SALVAR NOVA VIAGEM ===
         async function saveTrip(e) {
             e.preventDefault();
             
             const btn = document.getElementById('btn-save');
             const originalText = btn.innerText;
-            btn.innerText = "A Salvar na Nuvem...";
+            btn.innerText = "Salvando...";
             btn.disabled = true;
 
             const tripData = {
                 id: 't' + Date.now(),
-                nome: document.getElementById('trip-name').value,
-                km: parseFloat(document.getElementById('trip-km').value),
-                dias: parseFloat(document.getElementById('trip-days').value),
-                estadia: parseFloat(document.getElementById('trip-stay').value),
-                alimentacao: parseFloat(document.getElementById('trip-food').value),
-                combustivel: parseFloat(document.getElementById('preview-fuel-cost').dataset.rawvalue) || 0
+                name: document.getElementById('trip-name').value,
+                kmTotal: parseFloat(document.getElementById('trip-km').value),
+                days: parseFloat(document.getElementById('trip-days').value),
+                accommodation: parseFloat(document.getElementById('trip-stay').value),
+                schedule: [],
+                groceries: [{ item: 'Verba Geral', qty: '-', price: parseFloat(document.getElementById('trip-food').value) || 0 }],
+                drinks: [],
+                participants: [{ name: 'Weverson', paid: 0 }]
             };
 
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(tripData)
-                });
-                
-                // Adiciona no frontend
-                const newTripLocal = {
-                    id: tripData.id,
-                    name: tripData.nome,
-                    kmTotal: tripData.km,
-                    days: tripData.dias,
-                    accommodation: tripData.estadia,
-                    schedule: [],
-                    groceries: [{ item: 'Verba Geral (Adicionado via Novo Roteiro)', qty: '-', price: tripData.alimentacao }],
-                    drinks: [],
-                    participants: [{ name: 'Weverson', paid: 0 }]
-                };
+            dbTrips.push(tripData);
+            persist();
 
-                dbTrips.push(newTripLocal);
-
-                const selector = document.getElementById('tripSelector');
-                selector.innerHTML += `<option value="${newTripLocal.id}">📍 Planilha: ${newTripLocal.name}</option>`;
-                selector.value = newTripLocal.id; 
-                
-                loadTripData();
-                closeModal();
-                alert("Viagem salva no Banco de Dados com sucesso!");
-
-            } catch (error) {
-                console.error("Erro:", error);
-                alert("Erro ao comunicar com o Google Sheets.");
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
+            const selector = document.getElementById('tripSelector');
+            selector.innerHTML += `<option value="${tripData.id}">📍 Planilha: ${tripData.name}</option>`;
+            selector.value = tripData.id; 
+            
+            loadTripData();
+            closeModal();
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
 
         // === LÓGICA DE RENDERIZAÇÃO ===
         function init() {
             const selector = document.getElementById('tripSelector');
+            selector.innerHTML = '';
             dbTrips.forEach(trip => { selector.innerHTML += `<option value="${trip.id}">📍 Planilha: ${trip.name}</option>`; });
             loadTripData();
         }
@@ -411,23 +505,51 @@
 
             // Render Aba Compras e Bebidas
             document.getElementById('total-groceries').innerText = `R$ ${groceriesCost.toFixed(2)}`;
-            document.getElementById('list-groceries').innerHTML = trip.groceries && trip.groceries.length > 0 ? trip.groceries.map(g => `
-                <li class="px-5 py-3 flex justify-between items-center border-b border-gray-50 last:border-0">
-                    <div><span class="font-medium text-sm text-gray-700">${g.item}</span><p class="text-xs text-gray-400">Qtd: ${g.qty || '-'}</p></div>
-                    <span class="font-bold text-sm">R$ ${g.price.toFixed(2)}</span>
+            document.getElementById('list-groceries').innerHTML = trip.groceries && trip.groceries.length > 0 ? trip.groceries.map((g, idx) => `
+                <li class="px-5 py-3 flex justify-between items-center border-b border-gray-50 last:border-0 group">
+                    <div class="flex-1 mr-4">
+                        <input type="text" value="${g.item}" onchange="updateItem('groceries', ${idx}, 'item', this.value)" class="editable-input font-medium text-sm text-gray-700">
+                        <div class="flex items-center text-xs text-gray-400 mt-1">
+                            <span>Qtd:</span>
+                            <input type="text" value="${g.qty || '-'}" onchange="updateItem('groceries', ${idx}, 'qty', this.value)" class="editable-input w-20 ml-1">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center font-bold text-sm">
+                            <span>R$</span>
+                            <input type="number" step="0.01" value="${g.price.toFixed(2)}" onchange="updateItem('groceries', ${idx}, 'price', this.value)" class="editable-input w-24 text-right">
+                        </div>
+                        <button onclick="deleteItem('groceries', ${idx})" class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
                 </li>
             `).join('') : '<li class="px-5 py-3 text-sm text-gray-500 text-center">Nenhum item adicionado.</li>';
 
             document.getElementById('total-drinks').innerText = `R$ ${drinksCost.toFixed(2)}`;
-            document.getElementById('list-drinks').innerHTML = trip.drinks && trip.drinks.length > 0 ? trip.drinks.map(d => `
-                <li class="px-5 py-3 flex justify-between items-center border-b border-gray-50 last:border-0">
-                    <div><span class="font-medium text-sm text-gray-700">${d.item}</span><p class="text-xs text-gray-400">Qtd: ${d.qty || '-'}</p></div>
-                    <span class="font-bold text-sm">R$ ${d.price.toFixed(2)}</span>
+            document.getElementById('list-drinks').innerHTML = trip.drinks && trip.drinks.length > 0 ? trip.drinks.map((d, idx) => `
+                <li class="px-5 py-3 flex justify-between items-center border-b border-gray-50 last:border-0 group">
+                    <div class="flex-1 mr-4">
+                        <input type="text" value="${d.item}" onchange="updateItem('drinks', ${idx}, 'item', this.value)" class="editable-input font-medium text-sm text-gray-700">
+                        <div class="flex items-center text-xs text-gray-400 mt-1">
+                            <span>Qtd:</span>
+                            <input type="text" value="${d.qty || '-'}" onchange="updateItem('drinks', ${idx}, 'qty', this.value)" class="editable-input w-20 ml-1">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center font-bold text-sm">
+                            <span>R$</span>
+                            <input type="number" step="0.01" value="${d.price.toFixed(2)}" onchange="updateItem('drinks', ${idx}, 'price', this.value)" class="editable-input w-24 text-right">
+                        </div>
+                        <button onclick="deleteItem('drinks', ${idx})" class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
                 </li>
             `).join('') : '<li class="px-5 py-3 text-sm text-gray-500 text-center">Nenhuma bebida adicionada.</li>';
 
             // Render Aba Pessoas (Racha)
-            const peopleHtml = trip.participants && trip.participants.length > 0 ? trip.participants.map(p => {
+            const peopleHtml = trip.participants && trip.participants.length > 0 ? trip.participants.map((p, idx) => {
                 const balance = p.paid - costPerPerson;
                 let statusBadge = '';
                 if(balance > 0) statusBadge = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">A receber R$ ${Math.abs(balance).toFixed(2)}</span>`;
@@ -435,14 +557,26 @@
                 else statusBadge = `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">Quitado</span>`;
 
                 return `
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 text-sm font-bold text-gray-800 whitespace-nowrap">${p.name}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">R$ ${p.paid.toFixed(2)}</td>
+                <tr class="hover:bg-gray-50 transition group">
+                    <td class="px-6 py-4 text-sm font-bold text-gray-800 whitespace-nowrap">
+                        <input type="text" value="${p.name}" onchange="updateParticipant(${idx}, 'name', this.value)" class="editable-input font-bold">
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <span>R$</span>
+                            <input type="number" step="0.01" value="${p.paid.toFixed(2)}" onchange="updateParticipant(${idx}, 'paid', this.value)" class="editable-input w-24">
+                        </div>
+                    </td>
                     <td class="px-6 py-4 text-sm font-medium text-primary whitespace-nowrap">R$ ${costPerPerson.toFixed(2)}</td>
                     <td class="px-6 py-4">${statusBadge}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="deleteParticipant(${idx})" class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </td>
                 </tr>
                 `;
-            }).join('') : '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhum participante adicionado.</td></tr>';
+            }).join('') : '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum participante adicionado.</td></tr>';
             document.getElementById('table-people').innerHTML = peopleHtml;
         }
 
